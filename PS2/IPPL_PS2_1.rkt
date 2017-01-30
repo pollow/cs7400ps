@@ -58,11 +58,13 @@
 (define-metafunction mobile
   replace : m number number -> m
   [(replace w number_old number_new)
-   ,(if (term ,(= (term w) (term number_old)))
-        (term number_new)
-        (term w))]
+   number_new
+   (side-condition (= (term w) (term number_old)))]
+  [(replace w number_old number_new) w]
   [(replace (m_1 m_2 w) number_old number_new)
-   ((replace m_1 number_old number_new) (replace m_2 number_old number_new) w)])
+   ((replace m_1 number_old number_new)
+    (replace m_2 number_old number_new)
+    w)])
 
 (define mr1 (term 7))
 (define mr2 (term (7 1 2)))
