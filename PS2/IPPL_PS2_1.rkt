@@ -77,13 +77,14 @@
 (test-equal (term (replace ,m4 9 7)) m4)
 
 
-;; determines whether or not a mobile is balanced. A mobile is balanced if the weight of
-;; the mobile on one end is equal to the weight of the mobile on the other end. The weight of
-;; a mobile naturally includes the beams.
+;; determines whether or not a mobile is balanced. A mobile is balanced if
+;; the weight of  the mobile on one end is equal to the weight of the mobile
+;; on the other end. The weight of a mobile naturally includes the beams.
 (define-metafunction mobile
   balanced? : m -> boolean
   [(balanced? w) #t]
-  [(balanced? (m_1 m_2 w)) ,(=  (term (total-weight m_1)) (term (total-weight m_2)))])
+  [(balanced? (m_1 m_2 w)) ,(=  (term (total-weight m_1))
+                                (term (total-weight m_2)))])
 
 (test-equal (term (balanced? ,m4)) #f)
 (test-equal (term (balanced? ,m6)) #t)
