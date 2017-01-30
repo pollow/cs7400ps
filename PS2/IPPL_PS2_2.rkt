@@ -19,14 +19,13 @@
 ;; mention only names that also name a node in g
 (define-metafunction Graph
   good : g -> boolean
+  [(good (graph n ...)) #t] ; for empty graph
   [(good (graph e ...)) #f]
-  [(good (graph n ...)) #t]
   [(good (graph n ... (edge x_1 x_2) e ...))
-   ,(and
-      (and
-      (member (term (node x_1)) (term  (n ...)))
-       (member (term (node x_2)) (term  (n ...))))
-    (term (good (graph n ... e ...))))])
+   (good (graph n ... e ...))
+   (side-condition (member (term (node x_1)) (term (n ...))))
+   (side-condition (member (term (node x_2)) (term (n ...))))]
+  [(good any) #f])
 
 (test-equal (term (good (graph))) #t)
 (test-equal (term (good (graph (node a) (node b) (edge b a)))) #t)
