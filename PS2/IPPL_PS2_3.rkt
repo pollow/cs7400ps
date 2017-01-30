@@ -7,7 +7,8 @@
 ;;   -- (Expression Expression)
 ;;  A Variable is a String.
 (define-language A
-  (Expression ::= (Expression Expression)
+  (Expression ::=
+              (Expression Expression)
               (function Variable Expression)
               Variable)
   (Variable ::= string))
@@ -28,10 +29,11 @@
 ;;  A Variable is a String.
 
 (define-language DB
-  (DBExpression ::= (DBExpression DBExpression)
-              (function Variable DBExpression)
-              Variable
-              number)
+  (DBExpression ::=
+                (DBExpression DBExpression)
+                (function Variable DBExpression)
+                Variable
+                number)
   (Variable ::= string))
 
 (define db1 (term (function "y"
@@ -59,36 +61,50 @@
 (define-metafunction ES
   db : Expression (ENV ...) ... -> DBExpression
   [(db Variable) Variable]
-  [(db Variable ((Variable_1 number_1) ... (Variable number) (Variable_2 number_2) ...))
+  [(db Variable ((Variable_1 number_1) ...
+                 (Variable number)
+                 (Variable_2 number_2) ...))
    number
    (side-condition (not (member (term Variable) (term (Variable_1 ...)))))]
   [(db Variable (ENV ...)) Variable]
-  
-  [(db (function Variable Expression)) (function Variable (db Expression ((Variable 0))))]
-  [(db (function Variable Expression) ((Variable_1 number_1) ... (Variable number) (Variable_2 number_2) ...))
-   (function Variable (db Expression (inc ((Variable_1 number_1) ... (Variable -1) (Variable_2 number_2) ...))))
+  [(db (function Variable Expression))
+   (function Variable (db Expression ((Variable 0))))]
+  [(db (function Variable Expression)
+       ((Variable_1 number_1) ... (Variable number) (Variable_2 number_2) ...))
+   (function Variable
+             (db Expression (inc ((Variable_1 number_1) ...
+                                  (Variable -1)
+                                  (Variable_2 number_2) ...))))
    (side-condition (not (member (term Variable) (term (Variable_1 ...)))))]
   [(db (function Variable Expression) (ENV ...))
-   (function Variable (db Expression (inc (ENV ... (Variable -1)))))]
-  
-  [(db (Expression_1 Expression_2)) ((db Expression_1) (db Expression_2))]
-  [(db (Expression_1 Expression_2) (ENV ...)) ((db Expression_1 (ENV ...)) (db Expression_2 (ENV ...)))])
+   (function Variable (db Expression ((Variable 0) ENV_1 ...)))
+   (where (ENV_1 ...) (inc (ENV ...)))]
+  [(db (Expression_1 Expression_2))
+   ((db Expression_1) (db Expression_2))]
+  [(db (Expression_1 Expression_2) (ENV ...))
+   ((db Expression_1 (ENV ...)) (db Expression_2 (ENV ...)))])
 
 ;; The function increase the number component of each ENV by 1.
 ;; For example, (inc ("x" 1) ("y" 2)) -> (("x" 2) ("y" 3))
 (define-metafunction ES
   inc : (ENV ...) -> (ENV ...)
-  [(inc ((Variable number))) ((Variable ,(+ (term number) 1)))]
-  [(inc ((Variable number) (Variable_1 number_1) ...)) ((Variable ,(+ (term number) 1)) ENV_1 ...)
-  (where (ENV_1 ...) (inc ((Variable_1 number_1) ...)))])
+  [(inc ()) ()]
+  [(inc ((Variable number)))
+   ((Variable ,(+ (term number) 1)))]
+  [(inc ((Variable number) (Variable_1 number_1) ...))
+   ((Variable ,(+ (term number) 1)) ENV_1 ...)
+   (where (ENV_1 ...) (inc ((Variable_1 number_1) ...)))])
 
-(test-equal (term (inc (("x" 1) ("y"  2) ("z" 3)))) (term (("x" 2) ("y" 3) ("z" 4))))
+(test-equal (term (inc (("x" 1) ("y"  2) ("z" 3))))
+            (term (("x" 2) ("y" 3) ("z" 4))))
 
 (test-equal (term (db ,a1)) (term ,db1))
 
 (define a2 (term (function "y"
                            ((function "x"
-                                      ((function "z" ("x" (function "x" ("x","y")))) "y"))
+                                      ((function "z"
+                                                 ("x" (function "x"
+                                                                ("x","y")))) "y"))
                             ("x" "y")))))
 
 (define db2 (term (function "y"
