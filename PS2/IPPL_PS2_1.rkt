@@ -10,7 +10,7 @@
 (define m2 (term (0 1 2)))
 (define m3 (term (,m1 ,m2 3)))
 (define m4 (term (,m2 ,m3 4)))
-(define m5 (term (,m2 ,m3 ,m4)))
+(define m5 (term (,m4 ,m3 ,m4)))
 (define m6 (term (,m4 ,m4 7)))
 
 (test-equal (redex-match? mobile m m1) #t)
@@ -18,38 +18,49 @@
 (test-equal (redex-match? mobile m m3) #t)
 (test-equal (redex-match? mobile m m4) #t)
 (test-equal (redex-match? mobile m m5) #f)
+(test-equal (redex-match? mobile m m6) #t)
 
 ;; counts the number of atomic sculptures in a mobile
 (define-metafunction mobile
   num-atomics : m -> number
   [(num-atomics w) 1]
-  [(num-atomics (m_1 m_2 w)) ,(+ (term (num-atomics m_1)) (term (num-atomics m_2)))])
+  [(num-atomics (m_1 m_2 w)) ,(+ (term (num-atomics m_1))
+                                 (term (num-atomics m_2)))])
 
 (test-equal (term (num-atomics ,m4)) 5)
+(test-equal (term (num-atomics ,m6)) 10)
 
 ;; determines the total weight of a mobile
 (define-metafunction mobile
   total-weight : m -> number
   [(total-weight w) ,(term w)]
-  [(total-weight (m_1 m_2 w)) ,(+ (term ,(+ (term (total-weight m_1)) (term (total-weight m_2)))) (term w))])
+  [(total-weight (m_1 m_2 w)) ,(+  (term (total-weight m_1))
+                                   (term (total-weight m_2))
+                                   (term w))])
 
 (test-equal (term (total-weight ,m4)) 13)
+(test-equal (term (total-weight ,m6)) 33)
 
 ;; determines the maximal number of links from the
 ;; top of a mobile to one of its atomic sculptures
 (define-metafunction mobile
   depth : m -> number
   [(depth w) 0]
-  [(depth (m_1 m_2 w)) ,(+ (term ,(max (term (depth m_1)) (term (depth m_2)))) 1)])
+  [(depth (m_1 m_2 w)) ,(+ (term ,(max (term (depth m_1))
+                                       (term (depth m_2))))
+                           1)])
 
 (test-equal (term (depth ,m4)) 3)
+(test-equal (term (depth ,m6)) 4)
 
 ;; replaces all atomic sculptures with an old weight with
 ;; atomic sculptures of a new weight in some mobile
 (define-metafunction mobile
   replace : m number number -> m
   [(replace w number_old number_new)
-   ,(if (term ,(= (term w) (term number_old))) (term number_new) (term w))]
+   ,(if (term ,(= (term w) (term number_old)))
+        (term number_new)
+        (term w))]
   [(replace (m_1 m_2 w) number_old number_new)
    ((replace m_1 number_old number_new) (replace m_2 number_old number_new) w)])
 
@@ -70,7 +81,7 @@
 (define-metafunction mobile
   balanced? : m -> boolean
   [(balanced? w) #t]
-  [(balanced? (m_1 m_2 w)) ,(= (term (total-weight m_1)) (term (total-weight m_2)))])
+  [(balanced? (m_1 m_2 w)) ,(=  (term (total-weight m_1)) (term (total-weight m_2)))])
 
 (test-equal (term (balanced? ,m4)) #f)
 (test-equal (term (balanced? ,m6)) #t)
