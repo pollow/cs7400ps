@@ -83,8 +83,16 @@
 (define-metafunction mobile
   balanced? : m -> boolean
   [(balanced? w) #t]
-  [(balanced? (m_1 m_2 w)) ,(=  (term (total-weight m_1))
-                                (term (total-weight m_2)))])
+  [(balanced? (m_1 m_2 w))
+   ,(=  (term (total-weight m_1))
+        (term (total-weight m_2)))
+   (side-condition (term (balanced? m_1)))
+   (side-condition (term (balanced? m_2)))]
+  [(balanced? any) #f])
 
 (test-equal (term (balanced? ,m4)) #f)
-(test-equal (term (balanced? ,m6)) #t)
+(test-equal (term (balanced? ,m6)) #f)
+(define mb1 (term (1 1 2)))
+(define mb2 (term (,mb1 ,mb1 3)))
+(test-equal (term (balanced? ,mb1)) #t)
+(test-equal (term (balanced? ,mb2)) #t)
