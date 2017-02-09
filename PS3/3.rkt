@@ -53,9 +53,12 @@
   (reduction-relation
    Lam-cbv
    #:domain e
+   ;; case for only one value to apply
    (--> (in-hole E ((λ (x) e_body) v))
         (in-hole E (subst-n (x v) e_body))
         subst0)
+   ;; case for multiple value to apply
+   ;; take the first one and leave others unchanged
    (--> (in-hole E ((λ (x) e_body) v v_1 v_2 ...))
         (in-hole E ((subst-n (x v) e_body) v_1 v_2 ...))
         subst1)))
@@ -174,6 +177,8 @@
 ;                                                          ;;     
 ;                                                                 
 
+
+;; union language suffice to the definition of alpha equivalence
 (define-union-language U LamBool Lam)
 
 ;; ------------------------------------------------------------------
@@ -365,7 +370,7 @@
   [(translate (s.e_1 s.e_2)) ((translate s.e_1) (translate s.e_2))]
   [(translate (s.e_1 s.e_2 ...)) ((translate s.e_1) (translate s.e_2) ...)]
   ;; wrap the vlaue in a lambda function and apply
-  ;; it to an 'id' function to get the value lately
+  ;; it to an 'id' function to evaluate the value lately
   [(translate (if s.e_1 then s.e_2 else s.e_3))
    (((λ (b) (λ (m) (λ (n) (b m n))))
     (translate s.e_1)
