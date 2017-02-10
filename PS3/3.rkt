@@ -1,14 +1,16 @@
 #lang racket
 (require redex)
 
+;; Language Definition for Lam
 (define-language Lam
   [e ::=
      x
      (λ (x) e)
-     (e e e ...)]
+     (e e ...)]
   [x ::=
      variable-not-otherwise-mentioned])
 
+;; Language Definition for LamBool
 (define-language LamBool
   [e ::=
      x
@@ -20,30 +22,8 @@
   [x ::=
      variable-not-otherwise-mentioned])
 
-
-;                                                                                   
-;                                                                                   
-;                                                             ;                     
-;   ;;;;;;                  ;                                 ;                     
-;   ;    ;;                 ;                      ;                                
-;   ;     ;                 ;                      ;                                
-;   ;     ;   ;;;;      ;;; ;  ;     ;    ;;;    ;;;;;;     ;;;      ;;;    ; ;;;;  
-;   ;    ;;   ;   ;    ;   ;;  ;     ;   ;   ;     ;          ;     ;   ;   ;;   ;; 
-;   ;;;;;    ;    ;;  ;     ;  ;     ;  ;          ;          ;    ;     ;  ;     ; 
-;   ;    ;   ;;;;;;;  ;     ;  ;     ;  ;          ;          ;    ;     ;  ;     ; 
-;   ;     ;  ;        ;     ;  ;     ;  ;          ;          ;    ;     ;  ;     ; 
-;   ;     ;  ;        ;     ;  ;     ;  ;          ;          ;    ;     ;  ;     ; 
-;   ;     ;   ;        ;   ;;  ;;   ;;   ;   ;     ;          ;     ;   ;   ;     ; 
-;   ;      ;   ;;;;     ;;; ;   ;;;; ;    ;;;       ;;;    ;;;;;;;   ;;;    ;     ; 
-;                                                                                   
-;                                                                                   
-;                                                                                   
-;                                                                                   
-                                                                                  
-
 ;; ------------------------------------------------------------------
 ;; REDUCTION : Call by Value For Lam
-
 (define-extended-language Lam-cbv Lam
   (v x (λ (x ...) e))
   (E hole
@@ -65,9 +45,8 @@
 
 ;; ------------------------------------------------------------------
 ;; TESTS
-
 (module+ test
-  (test-equal 
+  (test-equal
    (apply-reduction-relation* ->v (term ((λ (x) w) z)))
    (list (term w)))
   
@@ -142,41 +121,30 @@
   ;(apply-reduction-relation* =>v strange_1)
 
   (test-equal 
-   (apply-reduction-relation* =>v (term (if (((λ (x) (λ (y) x)) true) x) then ((λ (x) t) z) else ((λ (x) f) z))))
+   (apply-reduction-relation* =>v
+                              (term (if (((λ (x) (λ (y) x)) true) x)
+                                        then ((λ (x) t) z)
+                                        else ((λ (x) f) z))))
    (list (term t)))
 
   (test-equal 
-   (apply-reduction-relation* =>v (term (if true then ((λ (x) t) z) else ((λ (x) f) z))))
+   (apply-reduction-relation* =>v (term (if true
+                                            then ((λ (x) t) z)
+                                            else ((λ (x) f) z))))
    (list (term t)))
 
   (test-equal 
-   (apply-reduction-relation* =>v (term (if (((λ (x) (λ (y) x)) false) x) then ((λ (x) t) z) else ((λ (x) f) z))))
+   (apply-reduction-relation* =>v (term (if (((λ (x) (λ (y) x)) false) x)
+                                            then ((λ (x) t) z)
+                                            else ((λ (x) f) z))))
    (list (term f)))
 
   (test-equal 
-   (apply-reduction-relation* =>v (term (if false then ((λ (x) t) z) else ((λ (x) f) z))))
+   (apply-reduction-relation* =>v (term (if false
+                                            then ((λ (x) t) z)
+                                            else ((λ (x) f) z))))
    (list (term f)))
 )
-
-;                                                                 
-;                                                                 
-;                         ;                 ;                     
-;   ;     ;               ;     ;;;;        ;                     
-;   ;     ;    ;                   ;               ;              
-;   ;     ;    ;                   ;               ;              
-;   ;     ;  ;;;;;;     ;;;        ;      ;;;    ;;;;;;   ;     ; 
-;   ;     ;    ;          ;        ;        ;      ;       ;   ;; 
-;   ;     ;    ;          ;        ;        ;      ;       ;   ;  
-;   ;     ;    ;          ;        ;        ;      ;       ;   ;  
-;   ;     ;    ;          ;        ;        ;      ;        ; ;;  
-;   ;     ;    ;          ;        ;        ;      ;        ; ;   
-;   ;;   ;;    ;          ;        ;        ;      ;         ;;   
-;    ;;;;;      ;;;    ;;;;;;;      ;;;  ;;;;;;;    ;;;      ;;   
-;                                                            ;    
-;                                                            ;    
-;                                                          ;;     
-;                                                                 
-
 
 ;; union language suffice to the definition of alpha equivalence
 (define-union-language U LamBool Lam)
@@ -245,7 +213,8 @@
   ;; 2. general purpose capture avoiding case
   [(subst x_1 any_1 (λ (x_2 ...) any_2))
    (λ (x ...) (subst x_1 any_1 (subst-vars* (x_2 x) ... any_2)))
-   (where (x ...) ,(variables-not-in (term (x_1 any_1 any_2)) (term (x_2 ...))))]
+   (where (x ...) ,(variables-not-in (term (x_1 any_1 any_2))
+                                     (term (x_2 ...))))]
   ;; 3. replace x_1 with e_1
   [(subst x_1 any_1 x_1) any_1]
   ;; 4. x_1 and x_2 are different, so don't replace
@@ -374,39 +343,52 @@
   [(translate (if s.e_1 then s.e_2 else s.e_3))
    (((λ (b) (λ (m) (λ (n) (b m n))))
     (translate s.e_1)
-    (λ (y) (translate s.e_2))
-    (λ (y) (translate s.e_3))) (λ (x) x))])
+    (λ (s.x_1) (translate s.e_2))
+    (λ (s.x_2) (translate s.e_3))) (λ (x) x))
+   (where s.x_1 ,(variable-not-in (term s.e_2) (term x)))
+   (where s.x_2 ,(variable-not-in (term s.e_3) (term x)))])
 
 (module+ test
   (test-equal (term (translate x)) (term x) #:equiv =alpha)
   (test-equal (term (translate true)) (term (λ (u) (λ (v) u))) #:equiv =alpha)
   (test-equal (term (translate false)) (term (λ (u) (λ (v) v))) #:equiv =alpha)
   (test-equal (term (translate false)) (term (λ (u) (λ (v) v))) #:equiv =alpha)
-  (test-equal (term (translate (λ (x) (λ (y) z)))) (term (λ (u) (λ (v) z))) #:equiv =alpha)
-  (test-equal (term (translate (if true then (λ (x) (λ (y) z)) else false))) (term (((λ (b) (λ (m) (λ (n) (b m n))))
-                                                                                     (λ (x) (λ (y) x))
-                                                                                     (λ (y) (λ (x) (λ (y) z)))
-                                                                                     (λ (y) (λ (x) (λ (y) y))))
-                                                                                    (λ (x) x))) #:equiv =alpha))
+  (test-equal (term (translate (λ (x) (λ (y) z))))
+              (term (λ (u) (λ (v) z))) #:equiv =alpha)
+  (test-equal (term (translate (if true then (λ (x) (λ (y) z)) else false)))
+              (term (((λ (b) (λ (m) (λ (n) (b m n))))
+                      (λ (x) (λ (y) x))
+                      (λ (y) (λ (x) (λ (y) z)))
+                      (λ (y) (λ (x) (λ (y) y))))
+                     (λ (x) x))) #:equiv =alpha))
 
 (define-metafunction LamBool
   CorrectnessConjecture : e -> boolean
   ;; weak divergency conjecture
-  [(CorrectnessConjecture e) #t
-                             (side-condition (and
-                               (empty? (apply-reduction-relation* =>v (term e)))
-                               (empty? (apply-reduction-relation* ->v (term (translate e))))))]
+  [(CorrectnessConjecture e)
+   #t
+   (side-condition
+    (and (empty? (apply-reduction-relation* =>v
+                                            (term e)))
+         (empty? (apply-reduction-relation* ->v
+                                            (term (translate e))))))]
   ;; strong divergency conjecture
-  [(CorrectnessConjecture e) #t
-                             (side-condition (and
-                               (empty? (apply-reduction-relation* ->v
-                                                          (term (translate ,(car (apply-reduction-relation* =>v (term e)))))))
-                               (empty? (apply-reduction-relation* ->v (term (translate e))))))]
+  [(CorrectnessConjecture e)
+   #t
+   (side-condition
+    (and (empty? (apply-reduction-relation*
+                  ->v
+                  (term (translate ,(car (apply-reduction-relation*
+                                          =>v (term e)))))))
+         (empty? (apply-reduction-relation* ->v
+                                            (term (translate e))))))]
   ;; convergency conjecture
-  [(CorrectnessConjecture e) ,(=alpha
-                               (car (apply-reduction-relation* ->v
-                                                          (term (translate ,(car (apply-reduction-relation* =>v (term e)))))))
-                               (car (apply-reduction-relation* ->v (term (translate e)))))])
+  [(CorrectnessConjecture e)
+   ,(=alpha
+     (car (apply-reduction-relation*
+           ->v
+           (term (translate ,(car (apply-reduction-relation* =>v (term e)))))))
+     (car (apply-reduction-relation* ->v (term (translate e)))))])
 
 (redex-check LamBool e (term (CorrectnessConjecture e)))
 (term (CorrectnessConjecture ((λ (x) (x x)) (λ (x) (x x)))))
