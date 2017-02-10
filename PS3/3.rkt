@@ -365,7 +365,7 @@
 (define-union-language ST (s. LamBool) (t. Lam))
 
 (define-metafunction ST
-  translate : s.e ... -> t.e
+  translate : s.e -> t.e
   [(translate true) (λ (x) (λ (y) x))]
   [(translate false) (λ (x) (λ (y) y))]
   [(translate s.x) s.x]
