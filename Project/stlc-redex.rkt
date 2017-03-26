@@ -38,11 +38,11 @@
 (define re3 (term (λ (y bool) (λ (z bool) z))))
 
 (define not (term (λ (x bool) (if x then false else true))))
-(define ex10 (term (not true)))
+(define ex10 (term (,not true)))
 (define re10 (term false))
 
-(define ex11 (term (not false)))
-(define re11 (term (true)))
+(define ex11 (term (,not false)))
+(define re11 (term true))
 
 (define-metafunction STLC
   subst : x e e -> e
@@ -62,8 +62,8 @@
    (--> (in-hole E (if false then e_1 else e_2))
         (in-hole E e_2)
         if-false)
-   (--> (in-hole E ((λ (x t) e_1) v))
-        (in-hole E (subset x v e_1))
+   (--> (in-hole E ((λ (x t) e_b) v))
+        (in-hole E (subst x v e_b))
         app)))
 
 (define-extended-language STLC-typ STLC
@@ -98,9 +98,6 @@
    ---------------- tif
    (typed G (if e_1 then e_2 else e_3) t_r)])
 
-;; ----------------------------------------------------------
-;; (evaluate e) determines the value of e using CBN reduction
-
 (module+ test
   (test-equal (term (evaluate ,ex1)) re1)
   (test-equal (term (evaluate ,ex2)) re2)
@@ -120,12 +117,10 @@
 ;; -------------------------------------------------------------------
 ;; PROBLEMS
 
-
 (define bad (term (w (λ (x bool) x))))
 (test-equal (term (evaluate ,bad)) "type error!")
 (define bad1 (term (true (λ (x bool) x))))
 (test-equal (term (evaluate ,bad1)) "type error!")
-
 
 (define ex4 (term ((λ (x (int -> int)) ((λ (y int) (x y)) 4)) (λ (z int) z))))
 (define (test4) (term (evaluate ,ex4)))
