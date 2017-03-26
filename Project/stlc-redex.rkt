@@ -37,7 +37,7 @@
                    (λ (y bool) (λ (z bool) z)))))
 (define re3 (term (λ (y bool) (λ (z bool) z))))
 
-(define not (term (λ (x : bool) (if x then false else true))))
+(define not (term (λ (x bool) (if x then false else true))))
 (define ex10 (term (not true)))
 (define re10 (term false))
 
