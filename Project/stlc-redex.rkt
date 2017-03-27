@@ -2,6 +2,7 @@
 
 (require redex "tut-subst.rkt")
 
+(provide (all-defined-out))
 ;; Ruling out run-time errors by type checking
 
 ;; SYNTAX
