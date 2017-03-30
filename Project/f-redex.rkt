@@ -5,9 +5,20 @@
 (provide (all-defined-out))
 
 (define-language F
-  (e (e [t] e) v (if v then e else e))
-  (v x true false (λ [α] (x t) e))
-  (t (∀ [α] t -> t) α bool)
+  (e ::=
+     (e [t] e)
+     v
+     (if v then e else e))
+  (v ::=
+     x
+     true
+     false
+     (λ [α] (x t) e)
+     (v , v))
+  (t ::=
+     (∀ [α] t -> t)
+     α
+     bool)
   (E hole)
   (x variable-not-otherwise-mentioned)
   (α variable-not-otherwise-mentioned))
