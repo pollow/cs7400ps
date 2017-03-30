@@ -7,15 +7,16 @@
 (define-language F
   (e ::=
      (e [t] e)
+     (e e)
      v
      (if v then e else e))
   (v ::=
      x
      true
      false
-     (λ [α] (x t) e)
-     (v , v))
+     (λ [α] (x t) e))
   (t ::=
+     (t -> t)
      (∀ [α] t -> t)
      α
      bool)
@@ -111,12 +112,21 @@
    ----------------------------------------------- Ftlam
    (Ftyped (α_1 ...) ((x_1 t_1) ...) (λ [α] (x t) e) (∀ [α] t -> t_r))]
 
+  [(Ftyped (α_1 ...) ((x t) (x_1 t_1) ...) e t_r)
+   ----------------------------------------------- Ftlam2
+   (Ftyped (α_1 ...) ((x_1 t_1) ...) (λ (x t) e) (t -> t_r))]
+  
   [(Ftyped Δ Γ v_fun (∀ [α] t_arg -> t_res))
    (Ftyped Δ Γ v_arg t_2)
    (where t_2 (subst-α α t t_arg))
    (where t_3 (subst-α α t t_res))
    ------------------------------------------------ Ftapp
    (Ftyped Δ Γ (v_fun [t] v_arg) t_3)]
+
+  [(Ftyped Δ Γ v_fun (t_arg -> t_res))
+   (Ftyped Δ Γ v_arg t_arg)
+   ------------------------------------------------ Ftapp2
+   (Ftyped Δ Γ (v_fun v_arg) t_res)]
   
   [
    ---------------- Fttrue
