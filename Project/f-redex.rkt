@@ -5,19 +5,9 @@
 (provide (all-defined-out))
 
 (define-language F
-  (e ::=
-     (e [t] e)
-     v
-     (if v then e else e))
-  (v ::=
-     x
-     true
-     false
-     (λ [α] (x t) e))
-  (t ::=
-     (∀ [α] t -> t)
-     α
-     bool)
+  (e (e [t] e) v (if v then e else e))
+  (v x true false (λ [α] (x t) e))
+  (t (∀ [α] t -> t) α bool)
   (E hole)
   (x variable-not-otherwise-mentioned)
   (α variable-not-otherwise-mentioned))
@@ -107,7 +97,6 @@
    (Ftyped (α ...) ((x_1 t_1) ... (x t) (x_2 t_2) ...) x t)]
   
   [(Ftyped (α α_1 ...) ((x t) (x_1 t_1) ...) e t_r)
-   (where α ,(variable-not-in (term (α_1 ...)) (term α)))
    ----------------------------------------------- Ftlam
    (Ftyped (α_1 ...) ((x_1 t_1) ...) (λ [α] (x t) e) (∀ [α] t -> t_r))]
 

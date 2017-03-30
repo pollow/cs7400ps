@@ -5,10 +5,12 @@
 (define-union-language ST (s. STLC-typ) (t. F-typ))
 
 (define-metafunction ST
-  tt : s.t -> t.t
+  tt : any -> any
   [(tt bool) bool]
   [(tt (s.t_1 -> s.t_2)) (∀ [α] (tt s.t_1) -> (∀ [α] (∀ [α] (tt s.t_2) -> α) -> α))]
-  )
+  [(tt (s.t_1 -> any)) (∀ [α] (tt s.t_1) -> (∀ [α] (∀ [α] any -> α) -> α))]
+  [(tt (any -> s.t_2)) (∀ [α] any -> (∀ [α] (∀ [α] (tt s.t_2) -> α) -> α))]
+  [(tt any) any])
 
 (define-metafunction ST
   cps : s.e s.G -> t.e
@@ -33,13 +35,12 @@
   [(cps (if s.e_1 then s.e_2 else s.e_3) ((s.x_1 s.t_1) ...))
    (λ [α] (k (∀ [α] (tt s.t_2) -> α))
      ((cps s.e_1 ((s.x_1 s.t_1) ...)) [α]
-      (λ [α] (x bool) (if x then ((cps s.e_2 ((s.x_1 s.t_1) ...)) [α] k)
-                            else ((cps s.e_3 ((s.x_1 s.t_1) ...)) [α] k)))))
+                  (λ [α] (x bool) (if x then ((cps s.e_2 ((s.x_1 s.t_1) ...)) [α] k) else ((cps s.e_3 ((s.x_1 s.t_1) ...)) [α] k)))))
    (judgment-holds (typed ((s.x_1 s.t_1) ...) s.e_1 bool))
-   (judgment-holds (typed ((s.x_1 s.t_1) ...) s.e_2 s.t_1))
+   (judgment-holds (typed ((s.x_1 s.t_1) ...) s.e_2 s.t_2))
    (judgment-holds (typed ((s.x_1 s.t_1) ...) s.e_3 s.t_2))])
 
-(term (cps ((λ (x bool) (λ (y bool) x)) true) ()))
+#;(term (cps ((λ (x bool) (λ (y bool) x)) true) ()))
 
 #;(term (Fevaluate (cps ((λ (x bool) (λ (y bool) x)) true) ())))
 #;(term (Fevaluate (cps (λ (x bool) x) ())))
