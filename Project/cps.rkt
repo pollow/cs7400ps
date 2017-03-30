@@ -5,12 +5,10 @@
 (define-union-language ST (s. STLC-typ) (t. F-typ))
 
 (define-metafunction ST
-  tt : any -> any
+  tt : s.t -> t.t
   [(tt bool) bool]
   [(tt (s.t_1 -> s.t_2)) (∀ [α] (tt s.t_1) -> (∀ [α] (∀ [α] (tt s.t_2) -> α) -> α))]
-  [(tt (s.t_1 -> any)) (∀ [α] (tt s.t_1) -> (∀ [α] (∀ [α] any -> α) -> α))]
-  [(tt (any -> s.t_2)) (∀ [α] any -> (∀ [α] (∀ [α] (tt s.t_2) -> α) -> α))]
-  [(tt any) any])
+  )
 
 (define-metafunction ST
   cps : s.e s.G -> t.e
@@ -41,7 +39,7 @@
    (judgment-holds (typed ((s.x_1 s.t_1) ...) s.e_2 s.t_1))
    (judgment-holds (typed ((s.x_1 s.t_1) ...) s.e_3 s.t_2))])
 
-#;(term (cps ((λ (x bool) (λ (y bool) x)) true) ()))
+(term (cps ((λ (x bool) (λ (y bool) x)) true) ()))
 
 #;(term (Fevaluate (cps ((λ (x bool) (λ (y bool) x)) true) ())))
 #;(term (Fevaluate (cps (λ (x bool) x) ())))
