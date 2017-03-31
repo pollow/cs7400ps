@@ -36,6 +36,9 @@
         "if false")
    (--> (in-hole E ((λ [α] (x t_1) e) [t] v))
         (in-hole E (subst-x x v (subst-α α t e)))
+        "βαv")
+   (--> (in-hole E ((λ (x t_1) e) v))
+        (in-hole E (subst-x x v e))
         "βv")))
 
 
@@ -75,9 +78,18 @@
   ;; 1. α_1 bound, so don't continue in λ body
   [(subst-α α_1 any_1 (λ [α_1] (x_1 t_1) any_2))
    (λ [α_1] (x_1 t_1) any_2)]
+  [(subst-α α_1 any_1 (∀ [α_1] any_2))
+   (∀ [α_1] any_2)]
   ;; 2. general purpose capture avoiding case
   [(subst-α α_1 any_1 (λ [α_2] (x_1 t_1) any_2))
    (λ [α_new] (x_1 t_1)
+      (subst-α α_1 any_1
+               (subst-var-α α_2 α_new any_2)))
+   (where α_new ,(variable-not-in
+                  (term (α_1 any_1 any_2)) 
+                  (term α_2)))]
+  [(subst-α α_1 any_1 (∀ [α_2] any_2))
+   (∀ [α_new]
       (subst-α α_1 any_1
                (subst-var-α α_2 α_new any_2)))
    (where α_new ,(variable-not-in
