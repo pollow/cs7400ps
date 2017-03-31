@@ -14,7 +14,6 @@
      x
      true
      false
-     (λ (x t) e)
      (λ [α] (x t) e))
   (t ::=
      (t -> t)
