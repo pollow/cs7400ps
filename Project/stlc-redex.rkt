@@ -99,12 +99,15 @@
    ---------------- tif
    (typed G (if e_1 then e_2 else e_3) t_r)])
 
+(define id (term (λ (x bool) x)))
+
 (module+ test
   (test-equal (term (evaluate ,ex1)) re1)
   (test-equal (term (evaluate ,ex2)) re2)
   (test-equal (term (evaluate ,ex3)) re3)
   (test-equal (term (evaluate ,ex10)) re10)
-  (test-equal (term (evaluate ,ex11)) re11))
+  (test-equal (term (evaluate ,ex11)) re11)
+  (test-equal (judgment-holds (typed () ,id t) t) '((bool -> bool))))
 
 (define-metafunction STLC
   evaluate : e -> v or "type error!"
