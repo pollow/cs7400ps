@@ -1,0 +1,1 @@
+("6.7" ("bd46436a32b523104d709a43c7d52ea6ffdf5b18" . "b7b5dd67ebbc8c70fe01005c223bb6e6727a825c") #"/Users/unoboros/Desktop/cs7400ps/Project/tut-subst.rkt" (collects #"errortrace" #"errortrace-key.rkt") (collects #"racket" #"main.rkt") (collects #"racket" #"runtime-config.rkt") (collects #"redex" #"main.rkt"))
