@@ -7,7 +7,7 @@
 (define-language F
   (e (e [t] e) v (if v then e else e))
   (v x true false (λ [α] (x t) e))
-  (t (∀ [α] t -> t) (t -> t) α bool)
+  (t (∀ [α] t -> t) α bool)
   (E hole)
   (x variable-not-otherwise-mentioned)
   (α variable-not-otherwise-mentioned))
@@ -97,17 +97,15 @@
    (Ftyped (α ...) ((x_1 t_1) ... (x t) (x_2 t_2) ...) x t)]
   
   [(Ftyped (α α_1 ...) ((x t) (x_1 t_1) ...) e t_r)
-   #;(where α ,(variable-not-in (term (α_1 ...)) (term α)))
-   ----------------------------------------------- Fαtlam
+   ----------------------------------------------- Ftlam
    (Ftyped (α_1 ...) ((x_1 t_1) ...) (λ [α] (x t) e) (∀ [α] t -> t_r))]
 
   [(Ftyped Δ Γ v_fun (∀ [α] t_arg -> t_res))
    (Ftyped Δ Γ v_arg t_2)
    (where t_2 (subst-α α t t_arg))
    (where t_3 (subst-α α t t_res))
-   ------------------------------------------------ Fαtapp
+   ------------------------------------------------ Ftapp
    (Ftyped Δ Γ (v_fun [t] v_arg) t_3)]
-
   
   [
    ---------------- Fttrue
