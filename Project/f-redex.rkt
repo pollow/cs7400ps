@@ -5,9 +5,22 @@
 (provide (all-defined-out))
 
 (define-language F
-  (e (e [t] e) v (if v then e else e))
-  (v x true false (λ [α] (x t) e))
-  (t (∀ [α] t -> t) (t -> t) α bool)
+  (e ::=
+     (e [t] e)
+     (e e)
+     v
+     (if v then e else e))
+  (v ::=
+     x
+     true
+     false
+     (λ (x t) e)
+     (λ [α] (x t) e))
+  (t ::=
+     (t -> t)
+     (∀ [α] t -> t)
+     α
+     bool)
   (E hole)
   (x variable-not-otherwise-mentioned)
   (α variable-not-otherwise-mentioned))
@@ -23,6 +36,9 @@
         "if false")
    (--> (in-hole E ((λ [α] (x t_1) e) [t] v))
         (in-hole E (subst-x x v (subst-α α t e)))
+        "βαv")
+   (--> (in-hole E ((λ (x t_1) e) v))
+        (in-hole E (subst-x x v e))
         "βv")))
 
 
@@ -62,9 +78,18 @@
   ;; 1. α_1 bound, so don't continue in λ body
   [(subst-α α_1 any_1 (λ [α_1] (x_1 t_1) any_2))
    (λ [α_1] (x_1 t_1) any_2)]
+  [(subst-α α_1 any_1 (∀ [α_1] any_2))
+   (∀ [α_1] any_2)]
   ;; 2. general purpose capture avoiding case
   [(subst-α α_1 any_1 (λ [α_2] (x_1 t_1) any_2))
    (λ [α_new] (x_1 t_1)
+      (subst-α α_1 any_1
+               (subst-var-α α_2 α_new any_2)))
+   (where α_new ,(variable-not-in
+                  (term (α_1 any_1 any_2)) 
+                  (term α_2)))]
+  [(subst-α α_1 any_1 (∀ [α_2] any_2))
+   (∀ [α_new]
       (subst-α α_1 any_1
                (subst-var-α α_2 α_new any_2)))
    (where α_new ,(variable-not-in
@@ -97,17 +122,24 @@
    (Ftyped (α ...) ((x_1 t_1) ... (x t) (x_2 t_2) ...) x t)]
   
   [(Ftyped (α α_1 ...) ((x t) (x_1 t_1) ...) e t_r)
-   #;(where α ,(variable-not-in (term (α_1 ...)) (term α)))
-   ----------------------------------------------- Fαtlam
+   ----------------------------------------------- Ftlam
    (Ftyped (α_1 ...) ((x_1 t_1) ...) (λ [α] (x t) e) (∀ [α] t -> t_r))]
 
+  [(Ftyped (α_1 ...) ((x t) (x_1 t_1) ...) e t_r)
+   ----------------------------------------------- Ftlam2
+   (Ftyped (α_1 ...) ((x_1 t_1) ...) (λ (x t) e) (t -> t_r))]
+  
   [(Ftyped Δ Γ v_fun (∀ [α] t_arg -> t_res))
    (Ftyped Δ Γ v_arg t_2)
    (where t_2 (subst-α α t t_arg))
    (where t_3 (subst-α α t t_res))
-   ------------------------------------------------ Fαtapp
+   ------------------------------------------------ Ftapp
    (Ftyped Δ Γ (v_fun [t] v_arg) t_3)]
 
+  [(Ftyped Δ Γ v_fun (t_arg -> t_res))
+   (Ftyped Δ Γ v_arg t_arg)
+   ------------------------------------------------ Ftapp2
+   (Ftyped Δ Γ (v_fun v_arg) t_res)]
   
   [
    ---------------- Fttrue
