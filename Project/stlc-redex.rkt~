@@ -9,18 +9,15 @@
 (define-language STLC
   [v ::= ;; values
      x
-     integer
      true
      false
      (λ (x t) e)]
   [e ::= ;; expressions
      v
      (if e then e else e)
-     (e e)
-     (e \; e)]
+     (e e)]
   [t ::= ;; types
      bool
-     int
      (t -> t)]
   [x ::= ;; variables
      variable-not-otherwise-mentioned]
@@ -88,15 +85,6 @@
    (typed G e_arg t_arg)
    ---------------------------------- tapp
    (typed G (e_fun e_arg) t_res)]
-
-  [(typed G e_1 t_1)
-   (typed G e_2 t_2)
-   ---------------------------------- tstep
-   (typed G (e_1 \; e_2) t_2)]
-
-  [
-   ---------------- tint
-   (typed G integer int)]
 
   [
    ---------------- ttrue

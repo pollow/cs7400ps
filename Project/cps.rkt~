@@ -7,28 +7,20 @@
 (define-metafunction ST
   tt : any -> any
   [(tt bool) bool]
-  [(tt int) int]
   [(tt (s.t_1 -> s.t_2)) (∀ [α] (tt s.t_1) -> (((tt s.t_2) -> α) -> α))]
-  #;[(tt (s.t_1 -> any)) (∀ [α] (tt s.t_1) -> (∀ [α] (∀ [α] any -> α) -> α))]
-  #;[(tt (any -> s.t_2)) (∀ [α] any -> (∀ [α] (∀ [α] (tt s.t_2) -> α) -> α))]
-  #;[(tt any) any])
+  [(tt (s.t_1 -> any)) (∀ [α] (tt s.t_1) -> (∀ [α] (∀ [α] any -> α) -> α))]
+  [(tt (any -> s.t_2)) (∀ [α] any -> (∀ [α] (∀ [α] (tt s.t_2) -> α) -> α))]
+  [(tt any) any])
 
 (define-metafunction ST
   cps : s.e s.G -> t.e
-  [(cps true ((s.x_1 s.t_1) ...))
-   (λ [α] (t.x_k ((tt bool) -> α)) (t.x_k true))
-   (where t.x_k ,(variable-not-in (term (s.x_1 ...)) (term k)))
+  [(cps true s.G)
+   (λ [α] (k ((tt bool) -> α)) (k true))
    #;(where t.α (term α))
    #;(where t.x (term k))]
-  [(cps false ((s.x_1 s.t_1) ...))
-   (λ [α] (t.x_k ((tt bool) -> α)) (t.x_k false))
-   (where t.x_k ,(variable-not-in (term (s.x_1 ...)) (term k)))]
-  [(cps integer ((s.x_1 s.t_1) ...))
-   (λ [α] (t.x_k ((tt int) -> α)) (t.x_k integer))
-   (where t.x_k ,(variable-not-in (term (s.x_1 ...)) (term k)))]
+  [(cps false s.G) (λ [α] (k ((tt bool) -> α)) (k false))]
   [(cps s.x ((s.x_1 s.t_1) ... (s.x s.t) (s.x_2 s.t_2) ...))
-   (λ [α] (t.x_k ((tt s.t) -> α)) (t.x_k s.x))
-   (where t.x_k ,(variable-not-in (term (s.x s.x_1 ...)) (term k)))
+   (λ [α] (k ((tt s.t) -> α)) (k x))
    (judgment-holds (typed ((s.x_1 s.t_1) ... (s.x s.t) (s.x_2 s.t_2) ...) s.x s.t))]
   [(cps (λ (s.x s.t) s.e) ((s.x_1 s.t_1) ...))
    (λ [t.α_1] (t.x_k ((tt (s.t -> s.t_2)) -> t.α_1))
@@ -39,26 +31,25 @@
    (where t.α_1 ,(variable-not-in (term (s.e s.x_1 ...)) (term α)))
    (where t.α_2 ,(variable-not-in (term (t.α_1 s.e s.x_1 ...)) (term α)))
    (where t.x_k ,(variable-not-in (term (s.e s.x_1 ...)) (term k)))
-   (where t.x_k1 ,(variable-not-in (term (t.x_k s.e s.x_1 ...)) (term k)))
-   (where s.x_new ,(variable-not-in (term (t.x_k t.x_k1 s.e s.x_1 ...)) (term s.x)))]
+   (where t.x_k1 ,(variable-not-in (term (k s.e s.x_1 ...)) (term k)))
+   (where s.x_new ,(variable-not-in (term (k k_1 s.e s.x_1 ...)) (term s.x)))]
   [(cps (s.e_1 s.e_2) ((s.x_1 s.t_1) ...))
    (λ [t.α_1] (t.x_k ((tt s.t_3) -> t.α_1))
        (t.e_1 [t.α_1] (λ (t.x_1 (tt (s.t_2 -> s.t_3)))
                        (t.e_2 [t.α_1] (λ (t.x_2 (tt s.t_2)) ((t.x_1 [t.α_1] t.x_2) [t.α_1] t.x_k))))))
    (where t.α_1 ,(variable-not-in (term (s.e_1 s.e_2 (s.x_1 s.t_1) ...)) (term α)))
-   (where t.x_k ,(variable-not-in (term ((t.e_1 t.e_2) s.x_1 ...)) (term k)))
-   (where t.x_1 ,(variable-not-in (term ((t.e_1 t.e_2) s.x_1 ...)) (term x)))
-   (where t.x_2 ,(variable-not-in (term ((t.e_1 t.e_2) t.x_1 s.x_1 ...)) (term x)))
+   (where t.x_k ,(variable-not-in (term (t.e_1 t.e_2)) (term t.x_k)))
+   (where t.x_1 ,(variable-not-in (term (t.e_1 t.e_2)) (term t.x_1)))
+   (where t.x_2 ,(variable-not-in (term (t.e_1 t.e_2)) (term t.x_2)))
    (where t.e_1 (cps s.e_1 ((s.x_1 s.t_1) ...)))
    (where t.e_2 (cps s.e_2 ((s.x_1 s.t_1) ...)))
    (judgment-holds (typed ((s.x_1 s.t_1) ...) s.e_1 (s.t_2 -> s.t_3)))
    (judgment-holds (typed ((s.x_1 s.t_1) ...) s.e_2 s.t_2))]
   [(cps (if s.e_1 then s.e_2 else s.e_3) ((s.x_1 s.t_1) ...))
-   (λ [t.α_1] (t.x_k ((tt s.t_2) -> t.α_1))
+   (λ [t.α_1] (k ((tt s.t_2) -> t.α_1))
      (t.e_v [t.α_1]
-      (λ (t.x_1 bool) (if t.x_1 then (t.e_v1 [t.α_1] t.x_k)
-                            else (t.e_v2 [t.α_1] t.x_k)))))
-   (where t.x_k ,(variable-not-in (term (s.e_1 s.e_2 s.e_3 (s.x_1 s.t_1) ...)) (term k)))
+      (λ (t.x_1 bool) (if t.x_1 then (t.e_v1 [t.α_1] k)
+                            else (t.e_v2 [t.α_1] k)))))
    (where t.α_1 ,(variable-not-in (term (s.e_1 s.e_2 s.e_3 (s.x_1 s.t_1) ...)) (term α)))
    (where t.x_1 ,(variable-not-in (term (s.e_1 s.e_2 s.e_3 (s.x_1 s.t_1) ...)) (term x)))
    (where t.e_v (cps s.e_1 ((s.x_1 s.t_1) ...)))
@@ -66,59 +57,16 @@
    (where t.e_v2 (cps s.e_3 ((s.x_1 s.t_1) ...)))
    (judgment-holds (typed ((s.x_1 s.t_1) ...) s.e_1 bool))
    (judgment-holds (typed ((s.x_1 s.t_1) ...) s.e_2 s.t_2))
-   (judgment-holds (typed ((s.x_1 s.t_1) ...) s.e_3 s.t_2))]
-  [(cps (s.e_1 \; s.e_2) ((s.x_1 s.t_1) ...))
-   (λ [t.α_1] (t.x_k ((tt s.t_3) -> t.α_1))
-       (t.e_1 [t.α_1] (λ (t.x_1 (tt s.t_2))
-                       (t.e_2 [t.α_1] t.x_k))))
-   (where t.α_1 ,(variable-not-in (term (s.e_1 s.e_2 (s.x_1 s.t_1) ...)) (term α)))
-   (where t.x_k ,(variable-not-in (term (t.e_1 s.x_1 ...)) (term k)))
-   (where t.x_1 ,(variable-not-in (term (t.e_2 s.x_1 ...)) (term x)))
-   (where t.e_1 (cps s.e_1 ((s.x_1 s.t_1) ...)))
-   (where t.e_2 (cps s.e_2 ((s.x_1 s.t_1) ...)))
-   (judgment-holds (typed ((s.x_1 s.t_1) ...) s.e_1 s.t_2))
-   (judgment-holds (typed ((s.x_1 s.t_1) ...) s.e_2 s.t_3))])
+   (judgment-holds (typed ((s.x_1 s.t_1) ...) s.e_3 s.t_2))])
 
-#;(redex-match STLC
-               e
-               (term (λ (f (int -> int)) (λ (g (int -> int)) ((f 0) \; ((g 0) \; 0))))))
-
-#;(judgment-holds (typed ((f (int -> int)) (g (int -> int))) ((f 0) \; ((g 0) \; 0)) t) t)
-
-#;(term (cps (x \; x) ((x bool))))
-#;(term (cps (λ (f (int -> int)) (f 0)) ()))
-#;(term (cps ((f 0) \; (g 0)) ((f (int -> int)) (g (int -> int)))))
-
-(term (cps (λ (f (int -> int)) (λ (g (int -> int)) ((f 0) \; ((g 0) \; 0)))) ()))
-
-#;(term (cps f1 ((g1 (int -> int)) (f1 (int -> int)))))
-
-#;(λ (α)
-   (k ((∀ (α) (∀ (α) int -> ((int -> α) -> α)) -> (((∀ (α) (∀ (α) int -> ((int -> α) -> α)) -> ((int -> α) -> α)) -> α) -> α)) -> α))
-   (k
-    (λ (α1)
-      (f1 (∀ (α) int -> ((int -> α) -> α)))
-      (λ (k2 ((∀ (α) (∀ (α) int -> ((int -> α) -> α)) -> ((int -> α) -> α)) -> α1))
-        (k2
-            (λ (α1)
-              (g1 (∀ (α) int -> ((int -> α) -> α)))
-              ((f1 (α) 0) (α) (λ (x int) ((g1 (α) 0) (α) (λ (x int) (k2 0)))))))))))
-
-
-
-#;(redex-match F
-               e
-               (term (λ (α) (k ((∀ (α) int -> ((int -> α) -> α)) -> α)) (k x))))
-
-
-#;(term (cps true ()))
-#;(term (cps false ()))
-#;(term (cps x ((x bool))))
-#;(term (cps (λ (x bool) x) ()))
-#;(term (cps ((λ (x bool) x) true) ()))
-#;(term (cps (λ (x (bool -> bool)) (x true)) ()))
-#;(term (cps (if true then false else true) ()))
-#;(term (cps (λ (x bool) (if x then false else true)) ()))
+(term (cps true ()))
+(term (cps false ()))
+(term (cps x ((x bool))))
+(term (cps (λ (x bool) x) ()))
+(term (cps ((λ (x bool) x) true) ()))
+(term (cps (λ (x (bool -> bool)) (x true)) ()))
+(term (cps (if true then false else true) ()))
+(term (cps (λ (x bool) (if x then false else true)) ()))
 
 #;(term (cps ((λ (x bool) (λ (y bool) x)) true) ()))
 
