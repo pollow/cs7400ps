@@ -23,7 +23,8 @@
      α
      bool
      int)
-  (E hole)
+  ;; Nondeterministic reduction...
+  (E hole (e E) (e [t] E) (λ [α] (x t) E)  (λ (x t) E))
   (x variable-not-otherwise-mentioned)
   (α variable-not-otherwise-mentioned))
 
@@ -114,6 +115,7 @@
 
 (define-extended-language F-typ F
   (Δ ::= (α ...))
+  (κ ::= (x ...))
   (Γ ::= ((x t) ...)))
 
 (define-judgment-form F-typ
