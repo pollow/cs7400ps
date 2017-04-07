@@ -87,46 +87,66 @@
 
 
 (define-metafunction F
-  subst-α : α any any -> any
+  subst-α : α α t -> t
   ;; 1. α_1 bound, so don't continue in λ body
-  [(subst-α α_1 any_1 (λ [α_1] (x_1 t_1) any_2))
-   (λ [α_1] (x_1 t_1) any_2)]
-  [(subst-α α_1 any_1 (∀ [α_1] any_2))
-   (∀ [α_1] any_2)]
+  [(subst-α α_ori α_new (∀ [α_ori] t_1 -> t_2))
+   (∀ [α_ori] t_1 -> t_2)]
   ;; 2. general purpose capture avoiding case
-  [(subst-α α_1 any_1 (λ [α_2] (x_1 t_1) any_2))
-   (λ [α_new] (x_1 t_1)
-      (subst-α α_1 any_1
-               (subst-var-α α_2 α_new any_2)))
-   (where α_new ,(variable-not-in
-                  (term (α_1 any_1 any_2)) 
-                  (term α_2)))]
-  [(subst-α α_1 any_1 (∀ [α_2] any_2))
-   (∀ [α_new]
-      (subst-α α_1 any_1
-               (subst-var-α α_2 α_new any_2)))
-   (where α_new ,(variable-not-in
-                  (term (α_1 any_1 any_2)) 
-                  (term α_2)))]
-  [(subst-α α_1 any_1 α_1) any_1]
-  [(subst-α α_1 any_1 α_2) α_2]
-  [(subst-α α_1 any_1 (any_2 ...))
-   ((subst-α α_1 any_1 any_2) ...)]
-  [(subst-α α_1 any_1 any_2) any_2])
+  [(subst-α α_ori α_new (∀ [α_1] t_1 -> t_2))
+   (∀ [α_1] (subst-α α_ori α_new t_1) -> (subst-α α_ori α_new t_2))]
+  [(subst-α α_ori α_new α_ori) α_new]
+  [(subst-α α_ori α_new (t_1 -> t_2))
+   ((subst-α α_ori α_new t_1)
+    ->
+    (subst-α α_ori α_new t_2))]
+  [(subst-α α_ori α_new t_2) t_2])
 
-(define-metafunction F
-  subst-var-α : α any any -> any
-  [(subst-var-α α_1 any_1 α_1) any_1]
-  [(subst-var-α α_1 any_1 (any_2 ...)) 
-   ((subst-var-α α_1 any_1 any_2) ...)]
-  [(subst-var-α α_1 any_1 any_2) any_2]
-  [(subst-var-α any) any])
-
+(module+ test
+  (test-equal (term (subst-α x y bool)) (term bool))
+  (test-equal (term (subst-α x y x)) (term y))
+  (test-equal (term (subst-α x y (x -> x))) (term (y -> y)))
+  (test-equal (term (subst-α x y (∀ [x] x -> x))) (term (∀ [x] x -> x)))
+  (test-equal (term (subst-α x y (∀ [z] z -> x))) (term (∀ [z] z -> y)))
+  (test-equal (term (subst-α x y (x -> (∀ [z] z -> x))))
+              (term (y -> (∀ [z] z -> y))))
+)
 
 (define-extended-language F-typ F
   (Δ ::= (α ...))
   (κ ::= (x ...))
   (Γ ::= ((x t) ...)))
+
+(define-metafunction F-typ
+  normal : Δ t -> t
+  [(normal Δ_0 bool) bool]
+  [(normal Δ_0 α) α]
+  [(normal Δ_0 (t_arg -> t_res)) ((normal Δ_0 t_arg) -> (normal Δ_0 t_res))]
+  [(normal (α_0 ...) (∀ [α_1] t_arg -> t_res))
+    (∀ [α_2]
+       (normal (α_2 α_0 ...) ,(term (subst-α α_1 α_2 t_arg)))
+       ->
+       (normal (α_2 α_0 ...) ,(term (subst-α α_1 α_2 t_res))))
+    (where α_2 ,(variable-not-in (term (α_0 ...)) (term α)))])
+
+(module+ test
+  (test-equal (term (normal () bool)) (term bool))
+  (test-equal (term (normal () (bool -> bool))) (term (bool -> bool)))
+  (test-equal (term (normal () x)) (term x))
+  (test-equal (term (normal () (∀ [x] x -> x))) (term (∀ [α] α -> α)))
+  (test-equal (term (normal () (∀ [x] (∀ [y] y -> y) -> x)))
+              (term (∀ (α) (∀ (α1) α1 -> α1) -> α)))
+  )
+
+(define-metafunction F-typ
+  =alpha : t t -> any
+  [(=alpha t_1 t_2)
+   ,(equal? (term (normal () t_1)) (term (normal () t_2)))])
+
+(module+ test
+  (test-equal (term (=alpha (∀ [x] x -> x) (∀ [x] x -> x))) #t)
+  (test-equal (term (=alpha (∀ [x] x -> x) (∀ [y] y -> y))) #t)
+  (test-equal (term (=alpha (∀ [x] x -> x) (∀ [y] y -> bool))) #f)
+  (test-equal (term (=alpha (∀ [x] x -> x) (bool -> bool))) #f))
 
 (define-judgment-form F-typ
   #:contract (Ftyped Δ Γ e t)
@@ -134,7 +154,7 @@
   [ ;; x : t \in Γ
    ------------------------------------------------ Ftvar
    (Ftyped (α ...) ((x_1 t_1) ... (x t) (x_2 t_2) ...) x t)]
-  
+
   [(Ftyped (α α_1 ...) ((x t) (x_1 t_1) ...) e t_r)
    ----------------------------------------------- Ftlam
    (Ftyped (α_1 ...) ((x_1 t_1) ...) (λ [α] (x t) e) (∀ [α] t -> t_r))]
@@ -142,19 +162,21 @@
   [(Ftyped (α_1 ...) ((x t) (x_1 t_1) ...) e t_r)
    ----------------------------------------------- Ftlam2
    (Ftyped (α_1 ...) ((x_1 t_1) ...) (λ (x t) e) (t -> t_r))]
-  
+
   [(Ftyped Δ Γ v_fun (∀ [α] t_arg -> t_res))
-   (Ftyped Δ Γ v_arg t_2)
+   (Ftyped Δ Γ v_arg t_1)
    (where t_2 (subst-α α t t_arg))
    (where t_3 (subst-α α t t_res))
+   (side-condition (=alpha t_1 t_2))
    ------------------------------------------------ Ftapp
    (Ftyped Δ Γ (v_fun [t] v_arg) t_3)]
 
   [(Ftyped Δ Γ v_fun (t_arg -> t_res))
-   (Ftyped Δ Γ v_arg t_arg)
+   (Ftyped Δ Γ v_arg t_arg_1)
+   (side-condition (=alpha t_arg t_arg_1))
    ------------------------------------------------ Ftapp2
    (Ftyped Δ Γ (v_fun v_arg) t_res)]
-  
+
   [
    ---------------- Fttrue
    (Ftyped Δ Γ true bool)]
@@ -202,9 +224,12 @@
   (test-equal (judgment-holds (Ftyped () () ((λ [α] (x (∀ [α] bool -> bool)) x) [α] true) t) t) '())
   (test-equal (judgment-holds (Ftyped () () ((λ [α] (x bool) x) [α] true) t) t) '(bool))
   (test-equal (judgment-holds (Ftyped () () ((λ [α] (x (∀ [α] bool -> bool)) x) [α] (λ [α] (w bool) w)) t) t) '((∀ (α) bool -> bool)))
-  (test-equal (judgment-holds (Ftyped () () (λ [α] (f (∀ [α] α -> α)) (λ [β] (x β) (f [β] x))) t) t) '((∀ (α) (∀ (α) α -> α) -> (∀ (β) β -> β)))))
+  (test-equal (judgment-holds (Ftyped () () (λ [α] (f (∀ [α] α -> α)) (λ [β] (x β) (f [β] x))) t) t) '((∀ (α) (∀ (α) α -> α) -> (∀ (β) β -> β))))
+  (test-equal (judgment-holds (Ftyped () () ((λ (f (∀ [y] y -> bool)) f) (λ [x] (arg x) true)) t) t) '((∀ [y] y -> bool)))
 
-(module+ test
+  )
+
+#; (module+ test
   (test-equal (term (Fevaluate ,fex1)) fre1)
   (test-equal (term (Fevaluate ,fex2)) fre2)
   (test-equal (term (Fevaluate ,fex3)) fre3)
