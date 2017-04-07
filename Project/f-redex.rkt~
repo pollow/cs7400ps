@@ -12,7 +12,6 @@
      (if v then e else e))
   (v ::=
      x
-     integer
      true
      false
      (λ (x t) e)
@@ -21,10 +20,8 @@
      (t -> t)
      (∀ [α] t -> t)
      α
-     bool
-     int)
-  ;; Nondeterministic reduction...
-  (E hole (e E) (e [t] E) (λ [α] (x t) E)  (λ (x t) E))
+     bool)
+  (E hole)
   (x variable-not-otherwise-mentioned)
   (α variable-not-otherwise-mentioned))
 
@@ -53,16 +50,6 @@
   ;; 2. general purpose capture avoiding case
   [(subst-x x_1 any_1 (λ [α] (x_2 t_2) any_2))
    (λ [α] (x_new t_2) 
-     (subst-x x_1 any_1
-              (subst-var x_2 x_new any_2)))
-   (where x_new ,(variable-not-in
-                  (term (x_1 any_1 any_2)) 
-                  (term x_2)))]
-  [(subst-x x_1 any_1 (λ (x_1 t_1) any_2))
-   (λ (x_1 t_1) any_2)]
-  ;; 2. general purpose capture avoiding case
-  [(subst-x x_1 any_1 (λ (x_2 t_2) any_2))
-   (λ (x_new t_2) 
      (subst-x x_1 any_1
               (subst-var x_2 x_new any_2)))
    (where x_new ,(variable-not-in
@@ -125,7 +112,6 @@
 
 (define-extended-language F-typ F
   (Δ ::= (α ...))
-  (κ ::= (x ...))
   (Γ ::= ((x t) ...)))
 
 (define-judgment-form F-typ
