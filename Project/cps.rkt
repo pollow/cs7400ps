@@ -5,13 +5,10 @@
 (define-union-language ST (s. STLC-typ) (t. F-typ))
 
 (define-metafunction ST
-  tt : any -> any
+  tt : s.t -> t.t
   [(tt bool) bool]
   [(tt int) int]
-  [(tt (s.t_1 -> s.t_2)) (∀ [α] (tt s.t_1) -> (((tt s.t_2) -> α) -> α))]
-  #;[(tt (s.t_1 -> any)) (∀ [α] (tt s.t_1) -> (∀ [α] (∀ [α] any -> α) -> α))]
-  #;[(tt (any -> s.t_2)) (∀ [α] any -> (∀ [α] (∀ [α] (tt s.t_2) -> α) -> α))]
-  #;[(tt any) any])
+  [(tt (s.t_1 -> s.t_2)) (∀ [α] (tt s.t_1) -> (((tt s.t_2) -> α) -> α))])
 
 (define-metafunction ST
   cps : s.e s.G t.Δ t.κ -> t.e
@@ -36,14 +33,11 @@
    (λ [t.α_1] (t.x_k ((tt (s.t -> s.t_2)) -> t.α_1))
        (t.x_k (λ [t.α_2] (s.x_new (tt s.t))
               (λ (t.x_k1 ((tt s.t_2) -> t.α_2))
-                ((cps (subst s.x s.x_new s.e)
-                      ((s.x_new s.t) (s.x_1 s.t_1) ...)
-                      (t.α_1 t.α_2 t.α_3 ...)
-                      (t.x_k t.x_k1 t.x_1 ...))
-                 [t.α_2] t.x_k1)))))
+                ((cps (subst s.x s.x_new s.e) ((s.x_new s.t) (s.x_1 s.t_1) ...) (t.α_1 t.α_2 t.α_3 ...) (t.x_k t.x_k1 t.x_1 ...)) [t.α_2] t.x_k1)))))
    (judgment-holds (typed ((s.x_new s.t) (s.x_1 s.t_1) ...) (subst s.x s.x_new s.e) s.t_2))
    (where t.α_1 ,(variable-not-in (term (s.e s.x_1 ... t.α_3 ...)) (term α)))
    (where t.α_2 ,(variable-not-in (term (t.α_1 s.e s.x_1 ... t.α_3 ...)) (term α)))
+   #;(where t.e_1 (cps (subst s.x s.x_new s.e) ((s.x_new s.t) (s.x_1 s.t_1) ...) (t.α_1 t.α_2 t.α_3 ...) (t.x_k t.x_k1 t.x_1 ...)))
    (where t.x_k ,(variable-not-in (term (s.e s.x_1 ... t.x_1 ...)) (term k)))
    (where t.x_k1 ,(variable-not-in (term (t.x_k s.e s.x_1 ... t.x_1 ...)) (term k)))
    (where s.x_new ,(variable-not-in (term (t.x_k t.x_k1 s.e s.x_1 ... t.x_1 ...)) (term s.x)))]
@@ -150,7 +144,7 @@
           (λ (k3 (int -> α8))
             ((g1 (α3) 0) (α3) (λ (x int) ((f1 (α3) 0) (α3) (λ (x1 int) (k3 0))))))))))))
 
-(λ (k (((int -> ((int -> α) -> α))
+#;(λ (k (((int -> ((int -> α) -> α))
         -> ((((int -> ((int -> α) -> α)) -> ((int -> α) -> α)) -> α) -> α)) -> α))
   (k
    (λ (f1 (int -> ((int -> α) -> α)))
