@@ -150,15 +150,16 @@
    (Ftyped (α_1 ...) ((x_1 t_1) ...) (λ (x t) e) (t -> t_r))]
 
   [(Ftyped Δ Γ v_fun (∀ [α] t_arg -> t_res))
-   (Ftyped Δ Γ v_arg t_2)
+   (Ftyped Δ Γ v_arg t_1)
    (where t_2 (subst-α α t t_arg))
    (where t_3 (subst-α α t t_res))
+   (side-condition (=alpha t_1 t_2))
    ------------------------------------------------ Ftapp
    (Ftyped Δ Γ (v_fun [t] v_arg) t_3)]
 
   [(Ftyped Δ Γ v_fun (t_arg -> t_res))
    (Ftyped Δ Γ v_arg t_arg_1)
-   ; (side-condition (≡ t_arg t_arg_1))
+   (side-condition (=alpha t_arg t_arg_1))
    ------------------------------------------------ Ftapp2
    (Ftyped Δ Γ (v_fun v_arg) t_res)]
 
@@ -203,13 +204,16 @@
 (define fex11 (term ((λ [α] (x bool) (if x then false else true)) [α] false)))
 (define fre11 (term true))
 
-#; (module+ test
+(module+ test
   (test-equal (judgment-holds (Ftyped () () (λ [α] (x bool) x) t) t) '((∀ (α) bool -> bool)))
   (test-equal (judgment-holds (Ftyped () () true t) t) '(bool))
   (test-equal (judgment-holds (Ftyped () () ((λ [α] (x (∀ [α] bool -> bool)) x) [α] true) t) t) '())
   (test-equal (judgment-holds (Ftyped () () ((λ [α] (x bool) x) [α] true) t) t) '(bool))
   (test-equal (judgment-holds (Ftyped () () ((λ [α] (x (∀ [α] bool -> bool)) x) [α] (λ [α] (w bool) w)) t) t) '((∀ (α) bool -> bool)))
-  (test-equal (judgment-holds (Ftyped () () (λ [α] (f (∀ [α] α -> α)) (λ [β] (x β) (f [β] x))) t) t) '((∀ (α) (∀ (α) α -> α) -> (∀ (β) β -> β)))))
+  (test-equal (judgment-holds (Ftyped () () (λ [α] (f (∀ [α] α -> α)) (λ [β] (x β) (f [β] x))) t) t) '((∀ (α) (∀ (α) α -> α) -> (∀ (β) β -> β))))
+  (test-equal (judgment-holds (Ftyped () () ((λ (f (∀ [y] y -> bool)) f) (λ [x] (arg x) true)) t) t) '((∀ [y] y -> bool)))
+
+  )
 
 #; (module+ test
   (test-equal (term (Fevaluate ,fex1)) fre1)
