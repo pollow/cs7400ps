@@ -58,6 +58,16 @@
    (where x_new ,(variable-not-in
                   (term (x_1 any_1 any_2)) 
                   (term x_2)))]
+  [(subst-x x_1 any_1 (λ (x_1 t_1) any_2))
+   (λ (x_1 t_1) any_2)]
+  ;; 2. general purpose capture avoiding case
+  [(subst-x x_1 any_1 (λ (x_2 t_2) any_2))
+   (λ (x_new t_2) 
+     (subst-x x_1 any_1
+              (subst-var x_2 x_new any_2)))
+   (where x_new ,(variable-not-in
+                  (term (x_1 any_1 any_2)) 
+                  (term x_2)))]
   ;; 3. replace x_1 with e_1
   [(subst-x x_1 any_1 x_1) any_1]
   ;; 4. x_1 and x_2 are different, so don't replace
