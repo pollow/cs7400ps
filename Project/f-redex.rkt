@@ -20,6 +20,7 @@
   (t ::=
      (t -> t)
      (∀ [α] t -> t)
+     (∀ [α] (t -> t))
      α
      bool
      int)
@@ -155,6 +156,7 @@
 (define-metafunction F-typ
   normal : Δ t -> t
   [(normal Δ_0 bool) bool]
+  [(normal Δ_0 int) int]
   [(normal Δ_0 α) α]
   [(normal Δ_0 (t_arg -> t_res)) ((normal Δ_0 t_arg) -> (normal Δ_0 t_res))]
   [(normal (α_0 ...) (∀ [α_1] t_arg -> t_res))
@@ -177,6 +179,13 @@
   =alpha : t t -> any
   [(=alpha t_1 t_2)
    ,(equal? (term (normal () t_1)) (term (normal () t_2)))])
+
+;; remove parenthesis
+(define-metafunction F-typ
+  rp : t -> t
+  [(rp (∀ [α] (t_1 -> t_2))) (∀ [α] t_1 -> t_2)]
+  [(rp (∀ [α] t_1 -> t_2)) (∀ [α] t_1 -> t_2)]
+  [(rp t) t])
 
 (module+ test
   (test-equal (term (=alpha (∀ [x] x -> x) (∀ [x] x -> x))) #t)
@@ -203,7 +212,10 @@
    (Ftyped Δ Γ v_arg t_1)
    (where t_2 (subst-α α t t_arg))
    (where t_3 (subst-α α t t_res))
-   (side-condition (=alpha t_1 t_2))
+   (side-condition
+    (or
+     (=alpha t_1 ,(term (rp (∀ [t] t_2))))
+     (=alpha t_1 t_2)))
    ------------------------------------------------ Ftapp
    (Ftyped Δ Γ (v_fun [t] v_arg) t_3)]
 
@@ -220,6 +232,10 @@
   [
    ---------------- Ftfalse
    (Ftyped Δ Γ false bool)]
+
+  [
+   ---------------- Ftint
+   (Ftyped Δ Γ integer int)]
 
   [
    (Ftyped Δ Γ e_1 bool)
@@ -265,7 +281,7 @@
 
   )
 
-#; (module+ test
+(module+ test
   (test-equal (term (Fevaluate ,fex1)) fre1)
   (test-equal (term (Fevaluate ,fex2)) fre2)
   (test-equal (term (Fevaluate ,fex3)) fre3)
